@@ -1,0 +1,98 @@
+{
+  "name": "claude-copilot",
+  "displayName": "Claude Copilot",
+  "description": "AI-powered code completions using Claude",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Programming Languages", "Machine Learning", "Other"],
+  "keywords": ["ai", "copilot", "claude", "anthropic", "code completion"],
+  "activationEvents": ["*"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Claude Copilot",
+      "properties": {
+        "claudeCopilot.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your Anthropic API key",
+          "order": 1
+        },
+        "claudeCopilot.model": {
+          "type": "string",
+          "default": "claude-3-haiku-20240307",
+          "enum": [
+            "claude-3-opus-20240229",
+            "claude-3-sonnet-20240229",
+            "claude-3-haiku-20240307"
+          ],
+          "description": "Claude model to use for completions",
+          "order": 2
+        },
+        "claudeCopilot.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable Claude Copilot",
+          "order": 3
+        },
+        "claudeCopilot.debounceDelay": {
+          "type": "number",
+          "default": 400,
+          "minimum": 100,
+          "maximum": 2000,
+          "description": "Delay in milliseconds before triggering completion",
+          "order": 4
+        },
+        "claudeCopilot.maxTokens": {
+          "type": "number",
+          "default": 150,
+          "minimum": 50,
+          "maximum": 500,
+          "description": "Maximum tokens for completion",
+          "order": 5
+        },
+        "claudeCopilot.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Temperature for completion (0 = deterministic, 1 = creative)",
+          "order": 6
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "claudeCopilot.toggleEnabled",
+        "title": "Claude Copilot: Toggle Enable/Disable"
+      },
+      {
+        "command": "claudeCopilot.setApiKey",
+        "title": "Claude Copilot: Set API Key"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^2.3.8"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.17.1"
+  }
+}
