@@ -42,12 +42,6 @@ export class ClaudeCompletionProvider implements vscode.InlineCompletionItemProv
                 return null;
             }
             
-            // Create fresh client instance
-            const anthropicClient = new Anthropic({ 
-                apiKey: apiKey,
-                baseURL: 'https://api.anthropic.com'
-            });
-            
             // Get context
             const beforeCursor = document.getText(new vscode.Range(
                 Math.max(0, position.line - 50),
@@ -70,26 +64,37 @@ export class ClaudeCompletionProvider implements vscode.InlineCompletionItemProv
             // Create prompt
             const prompt = this.createPrompt(beforeCursor, afterCursor, languageId);
             
-            // Make API call - completely clean request
-            const requestData: any = {
+            // Try direct HTTP request to bypass SDK issues
+            const requestBody = {
                 model: this.config.getModel(),
                 max_tokens: this.config.getMaxTokens(),
                 messages: [
                     {
-                        role: 'user' as const,
+                        role: 'user',
                         content: prompt
                     }
                 ]
             };
             
-            // Explicitly remove any potential stop_sequences
-            delete requestData.stop_sequences;
-            delete requestData.stop;
-            delete requestData.until;
+            this.logger.log(`Direct HTTP Request: ${JSON.stringify(requestBody, null, 2)}`);
             
-            this.logger.log(`Clean API Request: ${JSON.stringify(requestData, null, 2)}`);
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify(requestBody)
+            });
             
-            const completion = await anthropicClient.messages.create(requestData);
+            if (!response.ok) {
+                const errorText = await response.text();
+                this.logger.log(`HTTP Error ${response.status}: ${errorText}`, 'error');
+                return null;
+            }
+            
+            const completion = await response.json();
             
             if (token.isCancellationRequested) {
                 return null;
@@ -129,8 +134,8 @@ Generate only the code that should replace <CURSOR>. No explanations.`;
         return cleanPrompt.trim();
     }
     
-    private extractCompletion(response: Anthropic.Message): string {
-        if (response.content.length === 0) {
+    private extractCompletion(response: any): string {
+        if (!response.content || response.content.length === 0) {
             return '';
         }
         
