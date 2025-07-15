@@ -35,15 +35,18 @@ export class ClaudeCompletionProvider implements vscode.InlineCompletionItemProv
         this.lastCompletionTime = currentTime;
         
         try {
-            // Initialize Anthropic client if needed
-            if (!this.anthropic) {
-                const apiKey = await this.config.getApiKey();
-                if (!apiKey) {
-                    this.logger.log('No API key configured', 'warn');
-                    return null;
-                }
-                this.anthropic = new Anthropic({ apiKey });
+            // Initialize Anthropic client fresh each time to avoid configuration issues
+            const apiKey = await this.config.getApiKey();
+            if (!apiKey) {
+                this.logger.log('No API key configured', 'warn');
+                return null;
             }
+            
+            // Create fresh client instance
+            const anthropicClient = new Anthropic({ 
+                apiKey: apiKey,
+                baseURL: 'https://api.anthropic.com'
+            });
             
             // Get context
             const beforeCursor = document.getText(new vscode.Range(
@@ -67,8 +70,8 @@ export class ClaudeCompletionProvider implements vscode.InlineCompletionItemProv
             // Create prompt
             const prompt = this.createPrompt(beforeCursor, afterCursor, languageId);
             
-            // Make API call - explicit minimal request
-            const requestData = {
+            // Make API call - completely clean request
+            const requestData: any = {
                 model: this.config.getModel(),
                 max_tokens: this.config.getMaxTokens(),
                 messages: [
@@ -79,8 +82,14 @@ export class ClaudeCompletionProvider implements vscode.InlineCompletionItemProv
                 ]
             };
             
-            this.logger.log(`API Request: ${JSON.stringify(requestData, null, 2)}`);
-            const completion = await this.anthropic.messages.create(requestData);
+            // Explicitly remove any potential stop_sequences
+            delete requestData.stop_sequences;
+            delete requestData.stop;
+            delete requestData.until;
+            
+            this.logger.log(`Clean API Request: ${JSON.stringify(requestData, null, 2)}`);
+            
+            const completion = await anthropicClient.messages.create(requestData);
             
             if (token.isCancellationRequested) {
                 return null;
