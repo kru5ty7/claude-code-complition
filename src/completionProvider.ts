@@ -71,7 +71,6 @@ export class ClaudeCompletionProvider implements vscode.InlineCompletionItemProv
             const completion = await this.anthropic.messages.create({
                 model: this.config.getModel(),
                 max_tokens: this.config.getMaxTokens(),
-                temperature: this.config.getTemperature(),
                 messages: [
                     {
                         role: 'user',
@@ -107,17 +106,15 @@ export class ClaudeCompletionProvider implements vscode.InlineCompletionItemProv
     }
     
     private createPrompt(beforeCursor: string, afterCursor: string, languageId: string): string {
-        return `You are a code completion assistant. Generate a concise code completion at the cursor position.
+        const cleanPrompt = `You are a code completion assistant. Complete the code at <CURSOR>.
 
 Language: ${languageId}
 
-Code before cursor:
-${beforeCursor}
+${beforeCursor}<CURSOR>${afterCursor}
 
-Code after cursor:
-${afterCursor}
-
-Generate ONLY the code that should be inserted at the cursor position. Do not include any explanations or markdown formatting. Respond with just the completion text.`;
+Generate only the code that should replace <CURSOR>. No explanations.`;
+        
+        return cleanPrompt.trim();
     }
     
     private extractCompletion(response: Anthropic.Message): string {
