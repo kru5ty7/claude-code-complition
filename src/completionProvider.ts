@@ -78,7 +78,7 @@ export class ClaudeCompletionProvider implements vscode.InlineCompletionItemProv
                         content: prompt
                     }
                 ],
-                stop_sequences: ['\n\n', '</completion>']
+                stop_sequences: ['```', '</completion>', '\n\nfunction', '\n\nclass', '\n\nconst', '\n\nlet', '\n\nimport']
             });
             
             if (token.isCancellationRequested) {
