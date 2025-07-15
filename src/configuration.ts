@@ -37,7 +37,7 @@ export class ConfigurationManager {
     
     getModel(): string {
         const config = vscode.workspace.getConfiguration(ConfigurationManager.CONFIG_SECTION);
-        return config.get<string>('model', 'claude-3-haiku-20240307');
+        return config.get<string>('model', 'claude-3-5-haiku-20241022');
     }
     
     isEnabled(): boolean {

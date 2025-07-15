@@ -67,17 +67,20 @@ export class ClaudeCompletionProvider implements vscode.InlineCompletionItemProv
             // Create prompt
             const prompt = this.createPrompt(beforeCursor, afterCursor, languageId);
             
-            // Make API call
-            const completion = await this.anthropic.messages.create({
+            // Make API call - explicit minimal request
+            const requestData = {
                 model: this.config.getModel(),
                 max_tokens: this.config.getMaxTokens(),
                 messages: [
                     {
-                        role: 'user',
+                        role: 'user' as const,
                         content: prompt
                     }
                 ]
-            });
+            };
+            
+            this.logger.log(`API Request: ${JSON.stringify(requestData, null, 2)}`);
+            const completion = await this.anthropic.messages.create(requestData);
             
             if (token.isCancellationRequested) {
                 return null;
